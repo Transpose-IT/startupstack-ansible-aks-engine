@@ -1,0 +1,9 @@
+## Aks-engine configuration overrides
+cluster_autoscaler_min_nodes: 1
+cluster_autoscaler_max_nodes: 2
+
+ssh_username: azadmin
+ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDI1yD16jCpjGWbOrRnWwpqwtd2CAbXD7xhU0ztRjEMqXPY1mr8HAmFX/+lsFIcVoyfsYz0M8BWFxYONqQCJ5oq2/6he8aUwWB0WXRGUEq3g2bSUNmfx1Wc/iUeOe0ovI7YNQpmwfso1BxPExQY4uuQVjzXK6QNcBhMNTQQCXD5sJIdjwWahOWyQBGV7N29hOMAK7Zhsfd5rTTGkaB5ayPmvRIe99Ls8HvHA9AJ51br8nfMF/LuYRYGGKMnaAazOZDvL+22CGuPu910xxQUlQ+KHndJ9IwBuKX6fkNgUktUqr0ggP7bgnK4VRXNMD8PutHMXxfbalTQ7GLTNGzV8moF"
+
+
+## 

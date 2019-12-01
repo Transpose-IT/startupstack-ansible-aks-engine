@@ -1,0 +1,3 @@
+**/.azure
+**/_output/*
+**/docker/azcli.env

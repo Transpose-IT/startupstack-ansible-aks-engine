@@ -1,0 +1,17 @@
+version: '3.5'
+services:
+  ansible:
+    image: transposeless-ansible
+    command: /bin/bash 
+    stdin_open: true
+    tty: true
+    container_name: ansible
+    volumes:
+      - type: bind
+        source: ./ansible
+        target: /opt/ansible
+      - type: bind
+        source: ./.azure
+        target: /root/.azure
+    env_file:
+      - ./.azure/azcli.env

@@ -1,0 +1,89 @@
+{
+    "apiVersion": "vlabs",
+    "properties": {
+        "orchestratorProfile": {
+            "orchestratorType": "Kubernetes",
+            "orchestratorVersion": "{{ kubernetes_version }}",
+            "kubernetesConfig": {
+                "useManagedIdentity": true,
+                "containerRuntime": "{{ container_runtime }}",
+                "enablePodSecurityPolicy": true,
+                "enableRbac": true,
+                "etcdDiskSizeGB": "{{ etcd_disksize }}",
+                "loadBalancerSku": "basic",
+                "addons": [
+                    {
+                        "name": "kubernetes-dashboard",
+                        "enabled": {{ kubernetes_dashboard_enabled }}
+                    },
+                    {
+                        "name": "tiller",
+                        "enabled": {{ tiller_enabled }}
+                    },
+                    {
+                        "name": "cluster-autoscaler",
+                        "enabled": {{ cluster_autoscaler_enabled }},
+                        "containers": [
+                            {
+                                "name": "cluster-autoscaler",
+                                "cpuRequests": "100m",
+                                "memoryRequests": "300Mi",
+                                "cpuLimits": "100m",
+                                "memoryLimits": "300Mi"
+                            }
+                        ],
+                        "pools": [
+                            {
+                                "name": "agentpool1",
+                                "config": {
+                                    "min-nodes": "1",
+                                    "max-nodes": "2"
+                                }
+                            }
+                        ],
+                        "config": {
+                            "scan-interval": "10s"
+                        }
+                    },
+                    {
+                        "name": "rescheduler",
+                        "enabled": {{ rescheduler_enabled }}
+                    }
+                ]
+            }
+        },
+        "masterProfile": {
+            "count": {{ master_instance_count }},
+            "dnsPrefix": "{{ application_name }}-{{ env }}",
+            "vmSize": "{{ master_instance_type }}",
+            "distro": "{{ distro }}",
+            "osDiskSizeGB": {{ master_osdisk_size }},
+            "customVMTags": {
+                "env": "{{ env }}"
+            }
+        },
+        "agentPoolProfiles": [
+            {
+                "name": "agentpool1",
+                "count": {{ agentpool_instance_count }},
+                "vmSize": "{{ agentpool_instance_type }}",
+                "availabilityProfile": "VirtualMachineScaleSets",
+                "scaleSetPriority": "Low",
+                "scaleSetEvictionPolicy": "Delete",
+                "storageProfile": "ManagedDisks",
+                "distro": "{{ distro }}",
+                "osDiskSizeGB": {{ agentpool_osdisk_size }}
+            }
+        ],
+        "linuxProfile": {
+            "adminUsername": "{{ ssh_username }}",
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "keyData": "{{ ssh_public_key }}"
+                    }
+                ]
+            }
+        }
+    }
+}

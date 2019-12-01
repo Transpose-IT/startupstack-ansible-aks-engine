@@ -1,0 +1,32 @@
+# We need to use the Azure CLI here because not all options all supported by the Ansible provider
+- name: Log into Azure CLI
+  command: az login --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT -p /root/.azure/ansible-sp.pem
+
+# Do not enable soft delete on it, because it fails to create a new keyvault after deletion
+- name: Create Azure Keyvault
+  command: az keyvault create -n {{ application_name }}-{{ env }} -g {{ application_name }}-{{ env }} -l "{{ location }}" --tags env[={{ env }}] --enabled-for-deployment --enabled-for-template-deployment
+
+- name: Convert all keys to pfx format for Azure Keyvault format
+  command: openssl pkcs12 -export -in {{ tmp_aksengine_path }}/{{ env }}/{{ item }}.crt -inkey {{ tmp_aksengine_path }}/{{ env }}/{{ item }}.key -out {{ tmp_aksengine_path }}/{{ env }}/{{ item }}.pfx -passout pass:123
+  with_items: 
+    - "apiserver"
+    - "ca"
+    - "client"
+    - "etcdclient"
+    - "etcdpeer0"
+    - "etcdserver"
+    - "kubectlClient"
+
+- name: Upload keys to Azure Keyvault
+  command: az keyvault certificate import --vault-name {{ application_name }}-{{ env }} --name {{ item }} --password 123 -f {{ tmp_aksengine_path }}/{{ env }}/{{ item }}.pfx
+  with_items: 
+    - "apiserver"
+    - "ca"
+    - "client"
+    - "etcdclient"
+    - "etcdpeer0"
+    - "etcdserver"
+    - "kubectlClient"
+
+- name: Upload westeurope kubeconfig to Azure Keyvault
+  command: az keyvault secret set --name kubeconfig --vault-name {{ application_name }}-{{ env }} -f {{ tmp_aksengine_path }}/{{ env }}/kubeconfig/kubeconfig.westeurope.json

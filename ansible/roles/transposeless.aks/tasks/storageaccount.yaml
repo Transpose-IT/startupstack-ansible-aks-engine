@@ -1,0 +1,29 @@
+# Since the JSON files are too big to be stored in keyvault, we store them on a storage account
+- name: Create Azure Storage Account for AKS files
+  azure_rm_storageaccount:
+    resource_group: "{{ application_name }}-{{ env }}"
+    name: "{{ application_name }}{{ env }}aks"
+    type: Standard_LRS
+    kind: StorageV2
+    tags:
+      env: "{{ env }}"
+
+- name: Upload AKS json blobs to storage account
+  azure_rm_storageblob:
+    resource_group: "{{ application_name }}-{{ env }}"
+    storage_account_name: "{{ application_name }}{{ env }}aks"
+    container: "aksfiles"
+    src: "{{ tmp_aksengine_path }}/{{ env }}/{{ item }}.json"
+    blob: "{{ item }}.json"
+  with_items:
+    - "apimodel"
+    - "azuredeploy"
+    - "azuredeploy.parameters"
+
+- name: Upload generated kubernetes.json blobs to storage account
+  azure_rm_storageblob:
+    resource_group: "{{ application_name }}-{{ env }}"
+    storage_account_name: "{{ application_name }}{{ env }}aks"
+    container: "aksfiles"
+    src: "/tmp/kubernetes.json"
+    blob: "kubernetes.json"

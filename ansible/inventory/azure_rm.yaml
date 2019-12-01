@@ -1,0 +1,11 @@
+plugin: azure_rm
+auth_source: auto
+
+include_vmss_resource_groups: ["*"]
+
+exclude_host_filters:
+- powerstate != 'running'
+
+keyed_groups:
+- prefix: rg
+  key: resource_group

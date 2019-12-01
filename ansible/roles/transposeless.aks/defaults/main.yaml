@@ -1,0 +1,40 @@
+# Always use a supported version by aks-engine
+kubernetes_version: "1.16.1"
+
+# Aks-engine supports docker, containerd and kata-containers. However the default image does
+# not contain the kata-containers runtime
+container_runtime: "containerd"
+
+# Default value is 16.04, we use 18.04
+distro: "aks-ubuntu-18.04"
+
+# Applications to enable or disable
+kubernetes_dashboard_enabled: "false"
+tiller_enabled: "false"
+rescheduler_enabled: "false"
+cluster_autoscaler_enabled: "true"
+
+# Other default values
+cluster_autoscaler_min_nodes: 1
+cluster_autoscaler_max_nodes: 2
+
+# Size in GB for the etcd disk. In Azure a larger disk has better performance, so a busy
+# cluster may need to have a bigger etcd disk.
+etcd_disksize: 64 
+
+## Master settings
+# Default count set to 1, losing this one instance probably also means losing your etcd data
+master_instance_count: 1
+
+# Size of the VM. AKS and thus aks-engine does not support all instance types.
+master_instance_type: "Standard_B1ms"
+master_osdisk_size: 32
+
+## Agentpool settings
+agentpool_instance_count: 1
+agentpool_instance_type: "Standard_F2s_v2"
+agentpool_osdisk_size: 32
+
+## Variables used by role
+tmp_aksengine_path: "/tmp/aks-engine"
+tmp_k8s_configpath: "/tmp/kubernetes.json"

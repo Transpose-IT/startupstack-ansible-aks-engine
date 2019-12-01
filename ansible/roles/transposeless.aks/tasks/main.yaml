@@ -1,0 +1,54 @@
+- name: Create resource group
+  azure_rm_resourcegroup:
+    name: "{{ application_name }}-{{ env }}"
+    location: "{{ location }}"
+    tags:
+      env: "{{ env }}"
+
+- name: Check and fetch previous stored kubernetes.json in Azure storage account
+  azure_rm_storageblob:
+    resource_group: "{{ application_name }}-{{ env }}"
+    storage_account_name: "{{ application_name }}{{ env }}aks"
+    container: "aksfiles"
+    dest: "/tmp/kubernetes.json"
+    blob: "kubernetes.json"
+  ignore_errors: true
+  register: stored_k8s_config 
+
+- name: Generate temporary kubernetes.json
+  template:
+    src:  ../templates/kubernetes.json.j2
+    dest: "/tmp/kubernetes.json"
+    owner: root
+    group: root
+    mode: 0644
+  register: k8s_json_template
+
+- name: Run aks-engine to generate ARM templates
+  command: /usr/local/bin/aks-engine generate --no-pretty-print -m {{ tmp_k8s_configpath }} -o {{ tmp_aksengine_path }}/{{ env }} 
+  register: aks_engine_generate
+  when: k8s_json_template.changed
+
+- name: Show output of aks-engine run
+  debug: var=aks_engine_generate.stdout
+  when: aks_engine_generate.changed
+
+- name: Deploy AKS cluster via generated ARM template. This will take a while ...
+  azure_rm_deployment:
+    resource_group: "{{ application_name }}-{{ env }}"
+    name: "{{ application_name }}-{{ env }}-deployment"
+    location: "{{ location }}"
+    parameters: "{{ lookup('file', '{{ tmp_aksengine_path }}/{{ env }}/azuredeploy.parameters.json')  }}"
+    template: "{{ lookup('file', '{{ tmp_aksengine_path }}/{{ env }}/azuredeploy.json') }}"
+  when: aks_engine_generate.changed 
+
+- name: Start keyvault setup
+  include: keyvault.yaml
+  when: aks_engine_generate.changed
+
+- name: start storageaccount setup
+  include: storageaccount.yaml
+  when: aks_engine_generate.changed
+
+- name: start ip whitelist setup
+  include: ipwhitelist.yaml

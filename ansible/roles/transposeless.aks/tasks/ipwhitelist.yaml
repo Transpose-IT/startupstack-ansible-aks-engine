@@ -1,0 +1,35 @@
+- name: Get NSG object
+  azure_rm_resource_info:
+    resource_group: "{{ application_name }}-{{ env }}"
+    provider: network
+    resource_type: networkSecurityGroups
+  register: kubernetes_nsg  
+  when: ip_address_whitelist is defined
+
+- name: Fetch IPs from allow_ssh rule
+  set_fact:
+    az_allow_ssh_list: "{{ kubernetes_nsg | json_query('response[0].properties.securityRules[?name==`allow_ssh`].properties.sourceAddressPrefixes') | join(' ') }}"
+  when: ip_address_whitelist is defined
+
+- name: Fetch IPs from allow_kube_tls rule
+  set_fact:
+    az_allow_kube_tls_list: "{{ kubernetes_nsg | json_query('response[0].properties.securityRules[?name==`allow_kube_tls`].properties.sourceAddressPrefixes') | join(' ') }}"
+  when: ip_address_whitelist is defined
+
+- name: Compare the allow_ssh rule
+  set_fact:
+    az_allow_ssh_diff: "{{ az_allow_ssh_list | symmetric_difference(ip_address_whitelist) }}"
+  when: ip_address_whitelist is defined
+
+- name: Compare the allow_kube_tls rule
+  set_fact:
+    az_allow_kube_tls_diff: "{{ az_allow_kube_tls_list | symmetric_difference(ip_address_whitelist) }}"
+  when: ip_address_whitelist is defined
+
+- name: Update SSH allow rule with ip whitelist
+  command: az network nsg rule update --nsg-name {{ kubernetes_nsg.response[0].name }} --resource-group "{{ application_name }}-{{ env }}" --name allow_ssh --source-address-prefixes {{ ip_address_whitelist | join(' ') }}
+  when: az_allow_ssh_diff | length > 0
+
+- name: Update Kubernetes SSL allow rule with ip whitelist
+  command: az network nsg rule update --nsg-name {{ kubernetes_nsg.response[0].name }} --resource-group "{{ application_name }}-{{ env }}" --name allow_kube_tls --source-address-prefixes {{ ip_address_whitelist | join(' ') }}
+  when: az_allow_kube_tls_diff | length > 0

@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  name: Run AKS engine
+  vars_files:
+  - "group_vars/{{ env }}.yaml"
+  - "group_vars/all.yaml"
+  tasks:
+  - name: 
+    include_role:
+      name: "transposeless.aks"
